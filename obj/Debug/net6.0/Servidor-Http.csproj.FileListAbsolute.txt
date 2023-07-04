@@ -1,0 +1,15 @@
+u:\GitHub\Servidor-Http\bin\Debug\net6.0\Servidor-Http.exe
+u:\GitHub\Servidor-Http\bin\Debug\net6.0\Servidor-Http.deps.json
+u:\GitHub\Servidor-Http\bin\Debug\net6.0\Servidor-Http.runtimeconfig.json
+u:\GitHub\Servidor-Http\bin\Debug\net6.0\Servidor-Http.dll
+u:\GitHub\Servidor-Http\bin\Debug\net6.0\Servidor-Http.pdb
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\Servidor-Http.csproj.AssemblyReference.cache
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\Servidor-Http.GeneratedMSBuildEditorConfig.editorconfig
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\Servidor-Http.AssemblyInfoInputs.cache
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\Servidor-Http.AssemblyInfo.cs
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\Servidor-Http.csproj.CoreCompileInputs.cache
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\Servidor-Http.dll
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\refint\Servidor-Http.dll
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\Servidor-Http.pdb
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\Servidor-Http.genruntimeconfig.cache
+u:\GitHub\Servidor-Http\obj\Debug\net6.0\ref\Servidor-Http.dll
