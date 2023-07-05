@@ -11,10 +11,12 @@ namespace Program{
         private int port { get;set; }
         private int qtdRequests { get;set; }
         private SortedList<string,string> TiposMime;
+        private SortedList<string,string> Diretorios;
         public ServidorHttp(int port = 8080)
         {
             this.port = port;
             this.PopularTiposMime();
+            this.PopularDiretorio();
             try{
                 this.controller = new TcpListener(IPAddress.Parse("127.0.0.1"), this.port);
                 this.controller.Start();  
@@ -59,6 +61,18 @@ namespace Program{
                     string metodoHttp = linhas[0].Substring(0, iPrimeiroEspaco);
                     string recursoBuscado = linhas[0].Substring(iPrimeiroEspaco+1, 
                         iSegundoEspaco - iPrimeiroEspaco -1);
+                        
+                    if(recursoBuscado == "/")
+                    {
+                        recursoBuscado = "/index.html";
+                    }
+                    string textoParametros = recursoBuscado.Contains("?")?
+                        recursoBuscado.Split("?")[1] : "";
+
+                    SortedList<string,string> parametros = ProcessarParametros(textoParametros);
+
+                    recursoBuscado = recursoBuscado.Split("?")[0];
+
                     string versaoHttp = linhas[0].Substring(iSegundoEspaco+1);
                     
                     int iTerceiroEspaço = linhas[1].IndexOf(' ');
@@ -69,12 +83,20 @@ namespace Program{
 
                     byte[] bytesHeader = null;
 
-                    FileInfo fiArquivo = new FileInfo(ObterCaminhoArquivo(recursoBuscado));
+                    FileInfo fiArquivo = new FileInfo(ObterCaminhoArquivo(recursoBuscado, hostName));
                     if(fiArquivo.Exists)
                     {
                         if(TiposMime.ContainsKey(fiArquivo.Extension.ToLower()))
                         {
-                            contentBytes = File.ReadAllBytes(fiArquivo.FullName);
+                            if(fiArquivo.Extension.ToLower() == ".dhtml")
+                            {
+                                contentBytes = ConteudoGeradoDinamicamente(fiArquivo.FullName, parametros);
+                            }
+                            else
+                            {
+
+                                contentBytes = File.ReadAllBytes(fiArquivo.FullName);
+                            }
                             string tipoMime = TiposMime[fiArquivo.Extension.ToLower()];
                             bytesHeader = CreateHeader(versaoHttp, tipoMime,
                             "200",contentBytes.Length);
@@ -113,9 +135,10 @@ namespace Program{
             text.Append($"Content-Length: {qtdBytes}{Environment.NewLine}{Environment.NewLine}");
             return Encoding.UTF8.GetBytes(text.ToString());
         }
-        private string ObterCaminhoArquivo(string arquivo)
+        private string ObterCaminhoArquivo(string arquivo, string hostName)
         {
-            string caminhoArquivo = "U:\\GitHub\\Servidor-Http\\www" + arquivo.Replace("/", "\\");
+            string diretorio = Diretorios[hostName.Split(':')[0]];
+            string caminhoArquivo = diretorio + arquivo.Replace("/", "\\");
             return caminhoArquivo;
         }
 
@@ -123,6 +146,7 @@ namespace Program{
         {
             TiposMime = new SortedList<string, string>();
             this.TiposMime.Add(".html", "text/html;charset=utf-8");
+            this.TiposMime.Add(".dhtml", "text/html;charset=utf-8");
             this.TiposMime.Add(".htm", "text/html;charset=utf-8");
             this.TiposMime.Add(".css", "text/css");
             this.TiposMime.Add(".js", "text/javascript");
@@ -134,6 +158,49 @@ namespace Program{
             this.TiposMime.Add(".ico", "image/ico");
             this.TiposMime.Add(".woff", "image/woff");
             this.TiposMime.Add(".woff2", "image/woff2");
+        }
+        private void PopularDiretorio()
+        {
+            Diretorios = new SortedList<string, string>();
+            Diretorios.Add("gustavo.com", "U:\\GitHub\\Servidor-Http\\www/gustavo.com");
+            Diretorios.Add("localhost","U:\\GitHub\\Servidor-Http\\www/localhost");
+        }
+
+        private byte[] ConteudoGeradoDinamicamente(string arquivo, SortedList<string,string> param)
+        {
+            string coringa = "{{HtmlDinamico}}";
+            string conteudoArquivo = File.ReadAllText(arquivo);
+            StringBuilder geradorDinamico = new StringBuilder();
+            geradorDinamico.Append("<ul");
+            if(param.Count > 0)
+            {
+                foreach (var p in param)
+                {
+                    geradorDinamico.Append($"<li>{p.Key} {p.Value}</li>");
+                }
+            }
+            else
+            {
+                geradorDinamico.Append("Não foram encontrados parâmetros");
+            }
+            geradorDinamico.Append("</ul>");
+            string textoHtml = conteudoArquivo.Replace(coringa,geradorDinamico.ToString());
+            return Encoding.UTF8.GetBytes(textoHtml.ToString());
+        }
+
+        private SortedList<string, string> ProcessarParametros(string param)
+        {
+            SortedList<string, string> Parametros = new SortedList<string, string>();
+            //v=sdhugasuhsad
+            if(!string.IsNullOrEmpty(param.Trim()))
+            {
+                string[] par = param.Split("&");
+                foreach (var p in par)
+                {
+                    Parametros.Add(p.Split("=")[0].ToLower(), p.Split("=")[1]);
+                }
+            }
+            return Parametros;
         }
     }
 }
