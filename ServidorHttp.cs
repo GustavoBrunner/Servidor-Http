@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Web;
 
 namespace Program{
 
@@ -70,6 +71,18 @@ namespace Program{
                         recursoBuscado.Split("?")[1] : "";
 
                     SortedList<string,string> parametros = ProcessarParametros(textoParametros);
+                    
+                    string dadosPost = requestText.Contains("\r\n\r\n") ?
+                        requestText.Split("\r\n\r\n")[1] : "";
+
+                    if(!string.IsNullOrEmpty(dadosPost)){
+                        dadosPost = HttpUtility.UrlDecode(dadosPost, Encoding.UTF8);
+                        var parametrosPost = ProcessarParametros(dadosPost);
+                        foreach (var pp in parametrosPost)
+                        {
+                            parametros.Add(pp.Key, pp.Value);
+                        }
+                    }
 
                     recursoBuscado = recursoBuscado.Split("?")[0];
 
@@ -90,7 +103,7 @@ namespace Program{
                         {
                             if(fiArquivo.Extension.ToLower() == ".dhtml")
                             {
-                                contentBytes = ConteudoGeradoDinamicamente(fiArquivo.FullName, parametros);
+                                contentBytes = ConteudoGeradoDinamicamente(fiArquivo.FullName, parametros, metodoHttp);
                             }
                             else
                             {
@@ -166,26 +179,21 @@ namespace Program{
             Diretorios.Add("localhost","U:\\GitHub\\Servidor-Http\\www/localhost");
         }
 
-        private byte[] ConteudoGeradoDinamicamente(string arquivo, SortedList<string,string> param)
+        private byte[] ConteudoGeradoDinamicamente(string arquivo, SortedList<string,string> param, string metodoHttp)
         {
-            string coringa = "{{HtmlDinamico}}";
-            string conteudoArquivo = File.ReadAllText(arquivo);
-            StringBuilder geradorDinamico = new StringBuilder();
-            geradorDinamico.Append("<ul");
-            if(param.Count > 0)
-            {
-                foreach (var p in param)
-                {
-                    geradorDinamico.Append($"<li>{p.Key} {p.Value}</li>");
-                }
+            FileInfo fiArquivo = new FileInfo(arquivo);
+            string nomeClassePagina = "Pagina" + fiArquivo.Name.Replace(fiArquivo.Extension, "");
+            Type tipoPaginaDinamica = Type.GetType(nomeClassePagina,true,true);
+            PaginaDinamica paginaDinamica = Activator.CreateInstance(tipoPaginaDinamica) as PaginaDinamica;
+            paginaDinamica.HtmlModelo = File.ReadAllText(arquivo);
+            switch(metodoHttp.ToLower()){
+                case "get":
+                    return paginaDinamica.Get(param);
+                case "post":
+                    return paginaDinamica.Post(param);
+                default:
+                    return new byte[0];
             }
-            else
-            {
-                geradorDinamico.Append("Não foram encontrados parâmetros");
-            }
-            geradorDinamico.Append("</ul>");
-            string textoHtml = conteudoArquivo.Replace(coringa,geradorDinamico.ToString());
-            return Encoding.UTF8.GetBytes(textoHtml.ToString());
         }
 
         private SortedList<string, string> ProcessarParametros(string param)
